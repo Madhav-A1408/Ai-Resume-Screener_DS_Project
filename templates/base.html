@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}AI Powered Resume Screening System{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    body {
+      background: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80') 
+        no-repeat center center fixed;
+      background-size: cover;
+    }
+    .overlay {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(6px);
+    }
+    a, button {
+      transition: all 0.25s ease-in-out;
+    }
+    a:hover, button:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-gray-800 font-sans">
+  <div class="overlay min-h-screen">
+    <div class="max-w-6xl mx-auto p-6">
+
+      <!-- Header / Navbar -->
+      <header class="flex flex-wrap justify-between items-center py-4 border-b border-gray-200">
+        <h1 class="text-xl font-extrabold tracking-tight text-blue-700">
+          {% if user.is_authenticated %}
+    {% if user.profile.role == 'candidate' %}
+        <a href="{% url 'resumes:candidate_dashboard' %}" class="hover:text-blue-500">
+            AI Powered Resume<span class="text-gray-900"> Screening System</span>
+        </a>
+    {% elif user.profile.role == 'recruiter' %}
+        <a href="{% url 'resumes:recruiter_dashboard' %}" class="hover:text-blue-500">
+              AI Powered Resume<span class="text-gray-900"> Screening System</span>
+        </a>
+    {% elif user.profile.role == 'admin' %}
+        <a href="{% url 'resumes:admin_dashboard' %}" class="hover:text-blue-500">
+           AI Powered Resume<span class="text-gray-900"> Screening System</span>
+        </a>
+    {% endif %}
+{% else %}
+    <a href="/" class="hover:text-blue-500">
+        AI Powered Resume<span class="text-gray-900"> Screening System</span>
+    </a>
+{% endif %}
+
+        </h1>
+
+        <!-- Mobile toggle -->
+        <button id="menu-toggle" class="sm:hidden text-gray-600 focus:outline-none">
+          ☰
+        </button>
+
+        <nav id="nav-menu" class="hidden sm:flex sm:space-x-4 mt-2 sm:mt-0">
+          {% if user.is_authenticated %}
+            <span class="mr-2 text-gray-600">Hi, <strong>{{ user.username }}</strong></span>
+
+            {% if user.profile.role == 'candidate' %}
+              <a href="{% url 'resumes:candidate_dashboard' %}" class="text-blue-700 hover:text-blue-900 font-medium">Dashboard</a>
+              <a href="{% url 'resumes:job_list' %}" class="text-blue-700 hover:text-blue-900 font-medium">Browse Jobs</a>
+              <a href="{% url 'resumes:application_history' %}" class="text-blue-700 hover:text-blue-900 font-medium">View Application History</a>
+
+            {% elif user.profile.role == 'recruiter' %}
+              <a href="{% url 'resumes:recruiter_dashboard' %}" class="text-blue-700 hover:text-blue-900 font-medium">Dashboard</a>
+              <a href="{% url 'resumes:recruiter_profile' %}" class="text-blue-700 hover:text-blue-900 font-medium">Profile</a>
+              <a class="text-blue-700 hover:text-blue-900 font-medium" href="{% url 'resumes:job_create' %}">Create Job</a>
+
+            {% elif user.profile.role == 'admin' %}
+              <a href="{% url 'resumes:admin_dashboard' %}" class="text-blue-700 hover:text-blue-900 font-medium">Admin</a>
+            {% endif %}
+<a href="{% url 'resumes:change_password' %}" 
+   class="text-blue-700 hover:text-blue-900 font-medium">
+   Change Password
+</a>
+            <form method="post" action="{% url 'logout' %}" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="ml-2 px-3 py-1.5 bg-gray-200 hover:bg-red-500 hover:text-white rounded-lg font-medium">
+                Logout
+              </button>
+            </form>
+
+          {% else %}
+            <a href="{% url 'resumes:signup_candidate' %}" class="text-blue-700 hover:text-blue-900 font-medium">Sign Up (Candidate)</a>
+            <a href="{% url 'resumes:signup_recruiter' %}" class="text-blue-700 hover:text-blue-900 font-medium">Sign Up (Recruiter)</a>
+            <a href="{% url 'login' %}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Login</a>
+          {% endif %}
+          
+        </nav>
+      </header>
+
+      <!-- Flash messages -->
+      {% if messages %}
+        <div class="mt-4 space-y-2">
+          {% for message in messages %}
+            <div class="p-3 rounded-lg 
+                        {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-300
+                        {% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-300
+                        {% else %}bg-gray-100 text-gray-800 border border-gray-200{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Main Content -->
+      <main class="mt-6 bg-white/90 shadow-xl rounded-2xl p-6 backdrop-blur-sm">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- Footer -->
+      <footer class="text-center text-gray-600 mt-10 mb-4 text-sm">
+        © {{ now|date:"Y" }} <span class="font-semibold text-blue-700">AI Powered Resume Screen System</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Mobile nav toggle script -->
+  <script>
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+      const nav = document.getElementById('nav-menu');
+      nav.classList.toggle('hidden');
+      nav.classList.toggle('flex');
+      nav.classList.toggle('flex-col');
+      nav.classList.toggle('space-y-2');
+      nav.classList.add('bg-white/90', 'p-4', 'rounded-xl', 'shadow-md');
+    });
+  </script>
+  <style>
+.cke_editable {
+  background-color: #ffffff !important;
+  color: #1f2937 !important; /* Tailwind gray-800 */
+  font-family: 'Inter', sans-serif !important;
+  padding: 10px !important;
+  border-radius: 8px;
+}
+</style>
+</body>
+</html>

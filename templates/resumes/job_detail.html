@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block content %}
+
+<div class="bg-white p-4 rounded shadow"><h2 class="text-2xl font-semibold">{{ job.title }}</h2><div class="text-sm text-gray-600">{{ job.company }} — {{ job.location }} — {{ job.created_at }}</div><p class="mt-4">{{ job.description|safe }}</p>
+<div class="mt-4">{% if user.is_authenticated %}{% if applied %}<span class="text-green-600 font-semibold">You have applied to this job.</span>{% else %}<a href="{% url 'resumes:apply_job' job.pk %}" class="px-3 py-2 bg-blue-600 text-white rounded">Apply</a>{% endif %}{% else %}<a href="{% url 'login' %}" class="px-3 py-2 bg-blue-600 text-white rounded">Login to apply</a>{% endif %}
+</div>
+</div>{% endblock %}
