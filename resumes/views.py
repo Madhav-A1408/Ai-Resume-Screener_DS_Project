@@ -261,13 +261,18 @@ def apply_job(request, pk):
                 extracted = extract_text_from_file(fpath)
                 if extracted:
                     app.resume_text = extracted
+                    print("Extracted length:", len(app.resume_text or ""))
+                    print("First 300 chars:", (app.resume_text or "")[:300])
+
             score = score_resume_for_job(app.resume_text or '', job)
 
             # Ensure score is percentage
             if score is not None:
-                score = float(score) * 100 if score <= 1 else float(score)
+                #score = float(score) * 100 if score <= 1 else float(score)
+                score = float(score) * 100  # convert to percentage
 
-            app.score = score_resume_for_job(app.resume_text or '', job)
+            #app.score = score_resume_for_job(app.resume_text or '', job)
+            app.score = round(score, 2)
             app.save()
 
             # notify recruiter via console email
