@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+  <div class="w-full max-w-2xl px-6">
+    <div class="bg-white/95 p-8 rounded-2xl shadow-xl border border-gray-100">
+      <h2 class="text-2xl font-semibold mb-3">Edit Profile</h2>
+
+      {% if messages %}
+        {% for m in messages %}
+          <div class="mb-3 p-3 rounded {{ m.tags }}">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}<p class="text-sm text-red-600 mt-1">{{ form.username.errors|join:", " }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<p class="text-sm text-red-600 mt-1">{{ form.email.errors|join:", " }}</p>{% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Company name</label>
+            {{ form.company }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+            {{ form.company_website }}
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            {{ form.company_address }}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            {{ form.company_phone }}
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Company description</label>
+            {{ form.company_description }}
+          </div>
+        </div>
+
+        <div class="flex gap-2 mt-4">
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Save changes</button>
+          <a href="{% url 'resumes:recruiter_profile' %}" class="px-4 py-2 bg-gray-200 rounded">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

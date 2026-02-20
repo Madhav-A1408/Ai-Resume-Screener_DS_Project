@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="bg-white p-4 rounded shadow">
+  <h2 class="text-xl font-semibold mb-3">Application ML Score</h2>
+
+  <p><strong>Job:</strong> {{ application.job.title }}</p>
+  <p><strong>Score:</strong>
+    {% if application.score is not None %}
+
+      {{ application.score|floatformat:3 }}
+    {% else %}
+      Not scored
+    {% endif %}
+  </p>
+
+  <h3 class="mt-4 font-semibold">Matched Skills</h3>
+  {% if matched_skills %}
+    <ul class="list-disc ml-6">
+      {% for skill in matched_skills %}
+        <li class="capitalize">{{ skill }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-gray-600 italic">No direct skill keywords matched.</p>
+  {% endif %}
+
+  <h3 class="mt-4 font-semibold">Extracted Resume Text</h3>
+  <pre class="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded border">{{ application.resume_text }}</pre>
+</div>
+{% endblock %}
