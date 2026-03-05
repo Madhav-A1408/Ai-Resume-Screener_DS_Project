@@ -14,7 +14,7 @@ urlpatterns = [
     path('recruiter/job/create/', views.job_create, name='job_create'),
     path('recruiter/job/<int:pk>/applicants/', views.view_applicants, name='view_applicants'),
     path('my-applications/', views.candidate_dashboard, name='candidate_dashboard'),
-    path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin/', views.admin_dashboard, name='admin_dashboard'),
     path('ml-score/<int:application_id>/', views.ml_score_view, name='ml_score'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
 
@@ -26,5 +26,7 @@ path('change-password/', views.change_password_view, name='change_password'),
 path("applications/history/", views.application_history, name="application_history"),
 path('recruiter/job/<int:pk>/applicants/', views.view_applicants, name='view_applicants'),
 path('recruiter/application/<int:app_id>/set-status/', views.set_application_status, name='set_application_status'),
+path('export_applicants/<int:job_id>/', views.export_applicants, name='export_applicants'),
+path('recruiter/job/delete/<int:job_id>/', views.delete_job, name='delete_job'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

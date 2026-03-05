@@ -22,6 +22,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
+import csv
+from django.http import HttpResponse
+from .models import Application
+
 
 
 def password_reset(request):
@@ -339,6 +343,19 @@ def job_create(request):
         form = JobForm()
     return render(request, 'resumes/job_create.html', {'form': form})
 
+@login_required
+def delete_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+
+    # ensure only recruiter who posted the job can delete
+    if job.posted_by != request.user:
+        return HttpResponseForbidden("You are not allowed to delete this job.")
+
+    job.delete()
+    messages.success(request, "Job deleted successfully.")
+
+    return redirect('resumes:recruiter_dashboard')
+
 
 
 @login_required
@@ -474,3 +491,38 @@ def set_application_status(request, app_id):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'ok': True, 'status': status})
     return redirect('resumes:view_applicants', pk=app.job.pk)
+
+
+@login_required
+def export_applicants(request, job_id):
+
+    job = get_object_or_404(Job, pk=job_id)
+
+    # ensure only recruiter who posted job can export
+    if job.posted_by != request.user:
+        return HttpResponseForbidden("You are not allowed to export this data.")
+
+    applications = Application.objects.filter(
+        job=job,
+        status='accepted'
+    ).select_related('user')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{job.title}_accepted_applicants.csv"'
+
+    writer = csv.writer(response)
+
+    writer.writerow([
+        'Applicant Name',
+        'Applied Date',
+        'ATS Score'
+    ])
+
+    for app in applications:
+        writer.writerow([
+            app.user.username,
+            app.applied_at.strftime("%d-%m-%Y %H:%M"),
+            app.score
+        ])
+
+    return response

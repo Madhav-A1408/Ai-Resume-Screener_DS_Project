@@ -1,8 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="bg-white p-4 rounded shadow">
-  <h2 class="text-xl font-semibold mb-4">Applicants for {{ job.title }}</h2>
+  <!-- <h2 class="text-xl font-semibold mb-4">Applicants for {{ job.title }}</h2> -->
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold">Applicants for {{ job.title }}</h2>
 
+    <a href="{% url 'resumes:export_applicants' job.id %}"
+     class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+     Export to Excel
+    </a>
+  </div>
   {% for item in apps_with_meta %}
     {% with a=item.application %}
     <div class="border p-3 rounded mb-3 flex justify-between items-start">

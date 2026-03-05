@@ -49,7 +49,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/role-redirect/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -57,6 +57,7 @@ LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/role-redirect/'
 LOGOUT_REDIRECT_URL = '/login/'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 CKEDITOR_CONFIGS = {
     'default': {
