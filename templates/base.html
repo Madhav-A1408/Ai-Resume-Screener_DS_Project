@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>{% block title %}AI Powered Resume Screening System{% endblock %}</title>
+  <title>{% block title %}Naukri.com{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
@@ -19,96 +19,344 @@
       transition: all 0.25s ease-in-out;
     }
     a:hover, button:hover {
-      opacity: 0.9;
-      transform: scale(1.02);
+      transform: scale(1.05);
+      opacity: 0.95;
+      
     }
-  </style>
+    .nav-anim {
+      transition: all 0.2s ease-in-out;
+    }
+
+    .nav-anim:hover {
+      transform: scale(1.05);
+      opacity: 0.95;
+    }
+     /*Form Styling*/
+
+     /* INPUT STYLE */
+    .input-anim {
+      @apply w-full pl-10 pr-10 pt-5 pb-2 border border-gray-300 rounded-md bg-white;
+      transition: all 0.2s ease;
+    }
+
+    .input-anim:focus {
+      outline: none;
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 2px rgba(14,165,233,0.3);
+    }
+
+    /* BUTTON STYLE */
+    .btn-anim {
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-anim:hover {
+      transform: scale(1.03);
+    }
+
+    .btn-anim:active {
+      transform: scale(0.95);
+    }
+
+    /* LINK STYLE */
+    .link-anim {
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
+
+    .link-anim:hover {
+      transform: scale(1.05);
+      text-decoration: underline;
+    }
+
+    .nav-link {
+  position: relative;
+  padding: 6px 14px;
+  border-radius: 999px;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.nav-link:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Active tab (glow effect) */
+.nav-active {
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  color: white;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
+}
+
+/* Sliding underline */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 0%;
+  height: 2px;
+  background: #2563eb;
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+  width: 60%;
+}
+
+.nav-active::after {
+  width: 80%;
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.4s ease-out, fadeOut 0.5s ease forwards;
+  animation-delay: 0s, 3s;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.cke_editable {
+  background-color: #ffffff !important;
+  color: #1f2937 !important; /* Tailwind gray-800 */
+  font-family: 'Inter', sans-serif !important;
+  padding: 10px !important;
+  border-radius: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-in-out;
+}
+
+input[type="checkbox"][name$="-clear"] {
+  display: none;
+}
+
+a[href*="profile_images"] {
+  display: none;
+}
+
+.clearable-file-input {
+  display: none;
+}
+</style>
+      
+
 </head>
 
 <body class="min-h-screen text-gray-800 font-sans">
+  {% if messages %}
+  <div class="fixed top-5 right-5 z-50 space-y-3">
+    {% for message in messages %}
+      <div class="px-6 py-3 rounded-full bg-green-500 text-white shadow-lg animate-slideIn">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
   <div class="overlay min-h-screen">
     <div class="max-w-6xl mx-auto p-6">
 
-      <!-- Header / Navbar -->
-      <header class="flex flex-wrap justify-between items-center py-4 border-b border-gray-200">
-        <h1 class="text-xl font-extrabold tracking-tight text-blue-700">
-          {% if user.is_authenticated %}
-    {% if user.profile.role == 'candidate' %}
-        <a href="{% url 'resumes:candidate_dashboard' %}" class="hover:text-blue-500">
-            AI Powered Resume<span class="text-gray-900"> Screening System</span>
-        </a>
-    {% elif user.profile.role == 'recruiter' %}
-        <a href="{% url 'resumes:recruiter_dashboard' %}" class="hover:text-blue-500">
-              AI Powered Resume<span class="text-gray-900"> Screening System</span>
-        </a>
-    {% elif user.profile.role == 'admin' %}
-        <a href="{% url 'resumes:admin_dashboard' %}" class="hover:text-blue-500">
-           AI Powered Resume<span class="text-gray-900"> Screening System</span>
-        </a>
-    {% endif %}
-{% else %}
-    <a href="/" class="hover:text-blue-500">
-        AI Powered Resume<span class="text-gray-900"> Screening System</span>
-    </a>
-{% endif %}
+     <!-- Header / Navbar -->
+<header class="py-4 border-b border-gray-200">
 
+{% if user.is_authenticated and user.profile.role != 'admin' %}
+
+    <!-- LOGGED IN HEADER -->
+
+    <div class="mb-4">
+        <h1 class="text-xl font-extrabold tracking-tight text-blue-700">
+            <a href="/" class="nav-anim hover:text-blue-500">
+                Naukri.com<span class="text-gray-900"></span>
+            </a>
+        </h1>
+    </div>
+
+    <!-- Navigation -->
+<nav id="nav-menu" class="hidden sm:flex items-center w-full">
+
+    <!-- LEFT -->
+    <div class="flex-1 text-gray-600">
+        Hi, <strong>{{ user.username }}</strong>
+    </div>
+
+    <!-- CENTER -->
+    <div class="flex justify-center space-x-4 flex-1 whitespace-nowrap">
+
+        {% with current=request.resolver_match.url_name %}
+
+        {% if user.profile.role == 'candidate' %}
+
+            <a href="{% url 'resumes:candidate_dashboard' %}" 
+               class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+               {% if current == 'candidate_dashboard' %}
+                   bg-blue-600 text-white shadow-md
+               {% else %}
+                   text-blue-700 hover:bg-blue-100
+               {% endif %}">
+               Dashboard
+            </a>
+
+            <a href="{% url 'resumes:job_list' %}" 
+               class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+               {% if current == 'job_list' %}
+                   bg-blue-600 text-white shadow-md
+               {% else %}
+                   text-blue-700 hover:bg-blue-100
+               {% endif %}">
+               Browse Jobs
+            </a>
+
+            <a href="{% url 'resumes:application_history' %}" 
+               class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+               {% if current == 'application_history' %}
+                   bg-blue-600 text-white shadow-md
+               {% else %}
+                   text-blue-700 hover:bg-blue-100
+               {% endif %}">
+               View Application History
+            </a>
+
+        {% elif user.profile.role == 'recruiter' %}
+
+            <a href="{% url 'resumes:recruiter_dashboard' %}" 
+               class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+               {% if current == 'recruiter_dashboard' %}
+                   bg-blue-600 text-white shadow-md
+               {% else %}
+                   text-blue-700 hover:bg-blue-100
+               {% endif %}">
+               Dashboard
+            </a>
+
+            <a href="{% url 'resumes:recruiter_profile' %}" 
+               class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+               {% if current == 'recruiter_profile' %}
+                   bg-blue-600 text-white shadow-md
+               {% else %}
+                   text-blue-700 hover:bg-blue-100
+               {% endif %}">
+               Profile
+            </a>
+
+            <a href="{% url 'resumes:job_create' %}" 
+               class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+               {% if current == 'job_create' %}
+                   bg-blue-600 text-white shadow-md
+               {% else %}
+                   text-blue-700 hover:bg-blue-100
+               {% endif %}">
+               Create Job
+            </a>
+
+        {% endif %}
+
+        <a href="{% url 'resumes:change_password' %}" 
+           class="nav-anim px-4 py-1.5 rounded-full font-medium transition
+           {% if current == 'change_password' %}
+               bg-blue-600 text-white shadow-md
+           {% else %}
+               text-blue-700 hover:bg-blue-100
+           {% endif %}">
+           Change Password
+        </a>
+
+        {% endwith %}
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="flex justify-end flex-1">
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" 
+                class="inline-flex items-center gap-2 px-4 py-2 
+                       rounded-lg text-sm font-semibold
+                       bg-red-100 text-red-600 shadow-sm
+                       hover:bg-red-600 hover:text-white hover:shadow-md
+                       transition-all duration-300">
+            🚪 Logout
+        </button>
+    </form>
+</div>
+
+</nav>
+
+{% else %}
+
+    <!-- PUBLIC HEADER (HOME PAGE) -->
+
+    <div class="flex justify-between items-center">
+
+        <h1 class="text-xl font-extrabold tracking-tight text-blue-700">
+            <a href="/" class="hover:text-blue-500">
+                Naukri.com<span class="text-gray-900"></span>
+            </a>
         </h1>
 
-        <!-- Mobile toggle -->
-        <button id="menu-toggle" class="sm:hidden text-gray-600 focus:outline-none">
-          ☰
-        </button>
+        <div class="flex space-x-6 items-center">
 
-        <nav id="nav-menu" class="hidden sm:flex sm:space-x-4 mt-2 sm:mt-0">
-          {% if user.is_authenticated %}
-            <span class="mr-2 text-gray-600">Hi, <strong>{{ user.username }}</strong></span>
+            <a href="{% url 'resumes:signup_candidate' %}" 
+              class="nav-anim text-blue-700 hover:text-blue-900 font-medium">
+                Sign Up (Candidate)
+            </a>
 
-            {% if user.profile.role == 'candidate' %}
-              <a href="{% url 'resumes:candidate_dashboard' %}" class="text-blue-700 hover:text-blue-900 font-medium">Dashboard</a>
-              <a href="{% url 'resumes:job_list' %}" class="text-blue-700 hover:text-blue-900 font-medium">Browse Jobs</a>
-              <a href="{% url 'resumes:application_history' %}" class="text-blue-700 hover:text-blue-900 font-medium">View Application History</a>
+            <a href="{% url 'resumes:signup_recruiter' %}" 
+              class="nav-anim text-blue-700 hover:text-blue-900 font-medium">
+                Sign Up (Recruiter)
+            </a>
 
-            {% elif user.profile.role == 'recruiter' %}
-              <a href="{% url 'resumes:recruiter_dashboard' %}" class="text-blue-700 hover:text-blue-900 font-medium">Dashboard</a>
-              <a href="{% url 'resumes:recruiter_profile' %}" class="text-blue-700 hover:text-blue-900 font-medium">Profile</a>
-              <a class="text-blue-700 hover:text-blue-900 font-medium" href="{% url 'resumes:job_create' %}">Create Job</a>
+            <a href="{% url 'login' %}" 
+              class="nav-anim px-3 py-1.5 bg-blue-600 text-white rounded-lg font-medium
+                      hover:bg-blue-700 active:scale-95">
+                Login
+            </a>
 
-            {% elif user.profile.role == 'admin' %}
-              <a href="{% url 'resumes:admin_dashboard' %}" class="text-blue-700 hover:text-blue-900 font-medium">Admin</a>
-            {% endif %}
-<a href="{% url 'resumes:change_password' %}" 
-   class="text-blue-700 hover:text-blue-900 font-medium">
-   Change Password
-</a>
-            <form method="post" action="{% url 'logout' %}" class="inline">
-              {% csrf_token %}
-              <button type="submit" class="ml-2 px-3 py-1.5 bg-gray-200 hover:bg-red-500 hover:text-white rounded-lg font-medium">
-                Logout
-              </button>
-            </form>
+        </div>
 
-          {% else %}
-            <a href="{% url 'resumes:signup_candidate' %}" class="text-blue-700 hover:text-blue-900 font-medium">Sign Up (Candidate)</a>
-            <a href="{% url 'resumes:signup_recruiter' %}" class="text-blue-700 hover:text-blue-900 font-medium">Sign Up (Recruiter)</a>
-            <a href="{% url 'login' %}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Login</a>
-          {% endif %}
-          
-        </nav>
-      </header>
+    </div>
+
+{% endif %}
+
+</header>
 
       <!-- Flash messages -->
-      {% if messages %}
-        <div class="mt-4 space-y-2">
-          {% for message in messages %}
-            <div class="p-3 rounded-lg 
-                        {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-300
-                        {% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-300
-                        {% else %}bg-gray-100 text-gray-800 border border-gray-200{% endif %}">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
+       
 
       <!-- Main Content -->
       <main class="mt-6 bg-white/90 shadow-xl rounded-2xl p-6 backdrop-blur-sm">
@@ -117,7 +365,7 @@
 
       <!-- Footer -->
       <footer class="text-center text-gray-600 mt-10 mb-4 text-sm">
-        © {{ now|date:"Y" }} <span class="font-semibold text-blue-700">AI Powered Resume Screen System</span>
+        © {{ now|date:"Y" }} <span class="font-semibold text-blue-700">Naukri.com</span>
       </footer>
     </div>
   </div>
@@ -132,15 +380,27 @@
       nav.classList.toggle('space-y-2');
       nav.classList.add('bg-white/90', 'p-4', 'rounded-xl', 'shadow-md');
     });
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const toasts = document.querySelectorAll(".toast");
+
+    toasts.forEach((toast) => {
+      setTimeout(() => {
+        toast.style.transition = "opacity 0.5s ease";
+        toast.style.opacity = "0";
+
+        setTimeout(() => {
+          toast.remove();
+        }, 500);
+
+      }, 3000);
+    });
+  });
   </script>
-  <style>
-.cke_editable {
-  background-color: #ffffff !important;
-  color: #1f2937 !important; /* Tailwind gray-800 */
-  font-family: 'Inter', sans-serif !important;
-  padding: 10px !important;
-  border-radius: 8px;
-}
-</style>
+
+ 
+ 
+
+  
 </body>
 </html>

@@ -18,15 +18,17 @@ urlpatterns = [
     path('ml-score/<int:application_id>/', views.ml_score_view, name='ml_score'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
 
-    # resumes/urls.py (add)
-path('recruiter/profile/', views.recruiter_profile, name='recruiter_profile'),
-path('recruiter/profile/edit/', views.recruiter_profile_edit, name='recruiter_profile_edit'),
-path('change-password/', views.change_password_view, name='change_password'),
+    path('recruiter/profile/', views.recruiter_profile, name='recruiter_profile'),
+    path('recruiter/profile/edit/', views.recruiter_profile_edit, name='recruiter_profile_edit'),
+    path('change-password/', views.change_password_view, name='change_password'),
 
-path("applications/history/", views.application_history, name="application_history"),
-path('recruiter/job/<int:pk>/applicants/', views.view_applicants, name='view_applicants'),
-path('recruiter/application/<int:app_id>/set-status/', views.set_application_status, name='set_application_status'),
-path('export_applicants/<int:job_id>/', views.export_applicants, name='export_applicants'),
-path('recruiter/job/delete/<int:job_id>/', views.delete_job, name='delete_job'),
+    path("applications/history/", views.application_history, name="application_history"),
+    path('recruiter/job/<int:pk>/applicants/', views.view_applicants, name='view_applicants'),
+    path('recruiter/application/<int:app_id>/set-status/', views.set_application_status, name='set_application_status'),
+    path('export_applicants/<int:job_id>/', views.export_applicants, name='export_applicants'),
+    path('recruiter/job/delete/<int:job_id>/', views.delete_job, name='delete_job'),
+    path('recruiter/job/edit/<int:job_id>/', views.edit_job, name='edit_job'),
+    path('candidate/profile/edit/',views.candidate_profile_edit,name='candidate_profile_edit'),
+    path('logout/', views.logout_view, name='logout'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from .models import Job, Application, Profile
-from .forms import CandidateSignUpForm, RecruiterSignUpForm, ApplicationForm, JobForm
+from .forms import CandidateSignUpForm, RecruiterSignUpForm, ApplicationForm, JobForm, CandidateProfileForm,RecruiterProfileForm
 from .ml_model import score_resume_for_job, get_matched_skills
 from .utils import extract_text_from_file
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -25,41 +25,120 @@ from django.views.decorators.http import require_POST
 import csv
 from django.http import HttpResponse
 from .models import Application
+from datetime import timedelta
+from django.db.models import Q
+from django.contrib.auth import logout
+from django.views.decorators.http import require_http_methods
 
 
+
+
+import random
+from .models import PasswordResetOTP
+
+import random
+from datetime import timedelta
+from django.utils import timezone
 
 def password_reset(request):
     if request.method == "POST":
-        email = request.POST.get('email')
-        new_password = request.POST.get('newpassword')
-        confirm_password = request.POST.get('confirmpassword')
+        step = request.POST.get("step")
 
-        if new_password != confirm_password:
-            messages.error(request, "Passwords do not match.")
-            return redirect('password_reset')
+        # STEP 1 → SEND OTP
+        if step == "send_otp":
+            email = request.POST.get("email")
 
-        try:
-            user = User.objects.get(email=email) 
+            try:
+                user = User.objects.get(email=email)
+
+                # 🔥 delete old OTPs
+                PasswordResetOTP.objects.filter(user=user).delete()
+
+                otp = str(random.randint(100000, 999999))
+
+                otp_obj = PasswordResetOTP.objects.create(user=user, otp=otp)
+
+                send_mail(
+                    "Your Password Reset Code",
+                    f"Your OTP is {otp}. It is valid for 1 minute.",
+                    settings.EMAIL_HOST_USER,
+                    [email],
+                    fail_silently=False,
+                )
+
+                request.session['reset_email'] = email
+                request.session['otp_time'] = otp_obj.created_at.timestamp()
+
+                messages.success(request, "OTP sent to your email.")
+
+                return render(request, "resumes/reset_password.html", {
+                    "show_otp": True,
+                    "otp_time": request.session.get('otp_time')
+                })
+
+            except User.DoesNotExist:
+                messages.error(request, "Email not registered.")
+                return render(request, "resumes/reset_password.html", {"show_otp": False})
+
+        # STEP 2 → VERIFY OTP
+        elif step == "verify_otp":
+            otp = request.POST.get("otp")
+            new_password = request.POST.get("newpassword")
+            confirm_password = request.POST.get("confirmpassword")
+
+            email = request.session.get('reset_email')
+
+            if not email:
+                messages.error(request, "Session expired.")
+                return redirect('password_reset')
+
+            if new_password != confirm_password:
+                messages.error(request, "Passwords do not match.")
+                return render(request, "resumes/reset_password.html", {"show_otp": True})
+
+            user = User.objects.get(email=email)
+
+            otp_obj = PasswordResetOTP.objects.filter(user=user, otp=otp).last()
+
+            if not otp_obj:
+                messages.error(request, "Invalid OTP.")
+                return render(request, "resumes/reset_password.html", {"show_otp": True})
+
+            # ⏱ expiry check (1 minute)
+            if timezone.now() > otp_obj.created_at + timedelta(minutes=1):
+                messages.error(request, "OTP expired.")
+                return redirect('password_reset')
+
+            # ✅ RESET PASSWORD
             user.password = make_password(new_password)
             user.save()
-            messages.success(request, "Password changed successfully.")
+
+            otp_obj.delete()
+
+            messages.success(request, "Password reset successful.")
             return redirect('login')
-        except User.DoesNotExist:
-            messages.error(request, "Invalid email or not an admin.")
-    
-    return render(request, "resumes/reset_password.html")
 
-
+    # ✅ DEFAULT (VERY IMPORTANT FIX)
+    return render(request, "resumes/reset_password.html", {
+        "show_otp": False
+    })
 def signup_candidate(request):
     if request.method == 'POST':
         form = CandidateSignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
             Profile.objects.create(user=user, role='candidate')
+
             login(request, user)
-            return redirect('resumes:job_list')
+
+            # ✅ message ONLY when successful
+            messages.success(request, "Welcome! Your account has been created.")
+
+            return redirect('resumes:candidate_dashboard')
+
     else:
         form = CandidateSignUpForm()
+
     return render(request, 'resumes/signup_candidate.html', {'form': form})
 
 def signup_recruiter(request):
@@ -83,65 +162,12 @@ def signup_recruiter(request):
                 company_description=description
             )
             login(request, user)
+           
             return redirect('resumes:recruiter_dashboard')
     else:
         form = RecruiterSignUpForm()
     return render(request, 'resumes/signup_recruiter.html', {'form': form})
 
-class RecruiterProfileForm(forms.ModelForm):
-    # allow editing username/email on the same form if you want:
-    username = forms.CharField(required=True, label='Username')
-    email = forms.EmailField(required=True, label='Email')
-
-    class Meta:
-        model = Profile
-        fields = [
-            'company', 'company_website', 'company_phone',
-            'company_address', 'company_description'
-        ]
-        widgets = {
-            'company_address': forms.Textarea(attrs={'rows':2}),
-            'company_description': forms.Textarea(attrs={'rows':3}),
-        }
-
-    def __init__(self, *args, user=None, **kwargs):
-        # pass user to initialize username/email from User model
-        self.user = user
-        super().__init__(*args, **kwargs)
-        # Tailwind classes for visible inputs
-        cls = 'w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-200'
-        # for profile fields
-        for fname in self.fields:
-            self.fields[fname].widget.attrs.update({'class': cls, 'placeholder': self.fields[fname].label})
-        # add username/email fields separately (not in Meta)
-        self.fields['username'].widget.attrs.update({'class': cls, 'placeholder': 'Username'})
-        self.fields['email'].widget.attrs.update({'class': cls, 'placeholder': 'Email'})
-
-    def clean_username(self):
-        username = self.cleaned_data['username']
-        qs = User.objects.filter(username=username).exclude(pk=self.user.pk)
-        if qs.exists():
-            raise forms.ValidationError('Username already taken')
-        return username
-
-    def clean_email(self):
-        email = self.cleaned_data['email']
-        qs = User.objects.filter(email=email).exclude(pk=self.user.pk)
-        if qs.exists():
-            raise forms.ValidationError('Email already used')
-        return email
-
-    def save(self, commit=True):
-        # save profile fields and update User username/email
-        profile = super().save(commit=False)
-        user = self.user
-        user.username = self.cleaned_data['username']
-        user.email = self.cleaned_data['email']
-        if commit:
-            user.save()
-            profile.user = user
-            profile.save()
-        return profile
 
 
 # --- View: recruiter_profile (read-only) ---
@@ -153,13 +179,15 @@ def recruiter_profile(request):
     return render(request, 'resumes/recruiter_profile.html', {'profile': profile})
 
 # --- View: recruiter_profile_edit (edit form) ---
+
 @login_required
 def recruiter_profile_edit(request):
+    
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'recruiter':
         return redirect('resumes:job_list')
     profile = request.user.profile
     if request.method == 'POST':
-        form = RecruiterProfileForm(request.POST, instance=profile, user=request.user)
+        form = RecruiterProfileForm(request.POST, request.FILES, instance=profile, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile updated.')
@@ -185,7 +213,17 @@ def change_password_view(request):
     return render(request, 'resumes/change_password.html', {'form': form})
 
 def job_list(request):
-    qs = Job.objects.order_by('-created_at')
+    # qs = Job.objects.order_by('-created_at')
+    today = timezone.localdate()
+
+    # allow jobs to remain visible 2 days after deadline
+    valid_date = today - timedelta(days=2)
+
+    qs = Job.objects.filter(
+        Q(application_deadline__isnull=True) |
+        Q(application_deadline__gte=valid_date)
+    ).order_by('-created_at')
+    
     q = request.GET.get('q','').strip()
     company = request.GET.get('company','').strip()
     location = request.GET.get('location','').strip()
@@ -223,22 +261,46 @@ def job_list(request):
         }
     )
 
+# def job_detail(request, pk):
+#     job = get_object_or_404(Job, pk=pk)
+#     applied = False
+#     if request.user.is_authenticated:
+#         applied = Application.objects.filter(user=request.user, job=job).exists()
+
+#     # compute expired based on application_deadline
+#     today = timezone.localdate()
+#     expired = False
+#     if job.application_deadline:
+#         expired = job.application_deadline < today
+
+#     return render(request, 'resumes/job_detail.html', {
+#         'job': job,
+#         'applied': applied,
+#         'expired': expired,
+#     })
+
 def job_detail(request, pk):
     job = get_object_or_404(Job, pk=pk)
+
     applied = False
     if request.user.is_authenticated:
         applied = Application.objects.filter(user=request.user, job=job).exists()
 
-    # compute expired based on application_deadline
     today = timezone.localdate()
     expired = False
     if job.application_deadline:
         expired = job.application_deadline < today
 
+    # ✅ FIX: split skills here
+    skills_list = []
+    if job.skills:
+        skills_list = [s.strip() for s in job.skills.split(',') if s.strip()]
+
     return render(request, 'resumes/job_detail.html', {
         'job': job,
         'applied': applied,
         'expired': expired,
+        'skills_list': skills_list   # 👈 pass to template
     })
 
 @login_required
@@ -265,20 +327,22 @@ def apply_job(request, pk):
                 extracted = extract_text_from_file(fpath)
                 if extracted:
                     app.resume_text = extracted
+                    app.save()   
                     print("Extracted length:", len(app.resume_text or ""))
                     print("First 300 chars:", (app.resume_text or "")[:300])
 
             score = score_resume_for_job(app.resume_text or '', job)
 
-            # Ensure score is percentage
             if score is not None:
-                #score = float(score) * 100 if score <= 1 else float(score)
-                score = float(score) * 100  # convert to percentage
+                score = float(score)
+                MAX_EXPECTED = 0.45
+                normalized_score = (score / MAX_EXPECTED) * 100
+                normalized_score = min(normalized_score, 100)
+                app.score = round(normalized_score, 2)
+            else:
+                app.score = 0
 
-            #app.score = score_resume_for_job(app.resume_text or '', job)
-            app.score = round(score, 2)
             app.save()
-
             # notify recruiter via console email
             try:
                 if job.posted_by and job.posted_by.email:
@@ -294,16 +358,20 @@ def apply_job(request, pk):
 def candidate_dashboard(request):
     # only candidates
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'candidate':
+        
         return redirect('resumes:job_list')
+
     apps = Application.objects.filter(user=request.user).select_related('job').order_by('-applied_at')
     jobs = Job.objects.order_by('-created_at')
+
     applied_job_ids = set(a.job_id for a in apps)
+
     today = timezone.localdate()
     job_expired = {}
     for j in jobs:
         job_expired[j.id] = bool(j.application_deadline and j.application_deadline < today)
 
-    # Compute matched skills for each application (small, on-the-fly)
+    # ✅ matched skills
     application_skills = {}
     for a in apps:
         try:
@@ -312,21 +380,62 @@ def candidate_dashboard(request):
             skills = []
         application_skills[a.id] = skills
 
+    # ✅🔥 NEW: split profile skills for UI tags
+    skills_list = []
+    if request.user.profile.skills:
+        skills_list = [
+            s.strip() for s in request.user.profile.skills.split(',')
+            if s.strip()
+        ]
+        
+                # ✅ FORMAT EDUCATION FOR DISPLAY
+    education_list = []
+
+    if request.user.profile.education:
+            entries = request.user.profile.education.split(",")
+
+            for e in entries:
+                parts = [p.strip() for p in e.split("|")]
+
+                if len(parts) == 5:
+                    education_list.append({
+                        "degree": parts[0],
+                        "spec": parts[1],
+                        "college": parts[2],
+                        "year": parts[3],
+                        "cgpa": parts[4],
+                    })
+
     return render(request, 'resumes/candidate_dashboard.html', {
         'applications': apps,
         'jobs': jobs,
         'applied_job_ids': applied_job_ids,
         'application_skills': application_skills,
-         'job_expired': job_expired,
+        'job_expired': job_expired,
+
+        # ✅ ADD THIS
+        'skills_list': skills_list,
+        'education_list': education_list,   # ✅ ADD THIS
     })
 
 @login_required
 def recruiter_dashboard(request):
     # only recruiters
+    # if not hasattr(request.user, 'profile') or request.user.profile.role != 'recruiter':
+    #     return redirect('resumes:job_list')
+    # jobs = Job.objects.filter(posted_by=request.user).order_by('-created_at')
+    # return render(request, 'resumes/recruiter_dashboard.html', {'jobs': jobs})
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'recruiter':
         return redirect('resumes:job_list')
+
+    today = timezone.localdate()
+
     jobs = Job.objects.filter(posted_by=request.user).order_by('-created_at')
-    return render(request, 'resumes/recruiter_dashboard.html', {'jobs': jobs})
+
+    return render(request, 'resumes/recruiter_dashboard.html', {
+        'jobs': jobs,
+        'today': today
+    })
 
 @login_required
 def job_create(request):
@@ -342,6 +451,26 @@ def job_create(request):
     else:
         form = JobForm()
     return render(request, 'resumes/job_create.html', {'form': form})
+
+@login_required
+def edit_job(request, job_id):
+    job = get_object_or_404(Job,id=job_id)
+    
+    # ensure only recruiter who posted the job can edit
+    if job.posted_by != request.user:
+        return HttpResponseForbidden("You are not allowed to edit this job.")
+
+    if request.method == "POST":
+        form = JobForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Job updated successfully.")
+            return redirect('resumes:recruiter_dashboard')
+    else:
+        form = JobForm(instance=job)  # prefill form with existing job data
+
+    return render(request, "resumes/job_create.html", {"form": form , "edit_mode":True})
+    
 
 @login_required
 def delete_job(request, job_id):
@@ -422,14 +551,16 @@ def role_redirect(request):
     if not request.user.is_authenticated:
         return redirect('login')
 
+    if not hasattr(request.user, 'profile'):
+        messages.error(request, "No account profile found. Please sign up first.")
+        return redirect('login')
+
     role = request.user.profile.role
 
     if role == 'candidate':
         return redirect('resumes:candidate_dashboard')
-
     elif role == 'recruiter':
         return redirect('resumes:recruiter_dashboard')
-
     elif role == 'admin':
         return redirect('resumes:admin_dashboard')
 
@@ -443,7 +574,7 @@ def application_history(request):
 
     apps = (
         Application.objects.filter(user=request.user)
-        .select_related("job")
+        .select_related("job", "job__posted_by")
         .order_by("-applied_at")
     )
 
@@ -526,3 +657,50 @@ def export_applicants(request, job_id):
         ])
 
     return response
+
+@login_required
+def candidate_profile_edit(request):
+
+    profile = request.user.profile
+
+    if request.method == "POST":
+        form = CandidateProfileForm(
+            request.POST,
+            request.FILES,
+            instance=profile,
+            user=request.user
+        )
+
+        if form.is_valid():
+            profile = form.save(commit=False)
+
+            # 🔥 SAVE CUSTOM FIELDS
+            profile.education = request.POST.get('education', '')
+            profile.skills = request.POST.get('skills', '')
+            profile.experience = request.POST.get('experience', '')
+
+            profile.save()
+
+            return redirect('resumes:candidate_dashboard')
+
+    else:
+        # ✅ THIS WAS MISSING
+        form = CandidateProfileForm(
+            instance=profile,
+            user=request.user
+        )
+
+    return render(
+        request,
+        'resumes/candidate_profile_form.html',
+        {'form': form}
+    )
+    
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Logged out successfully!")
+    return redirect('login')

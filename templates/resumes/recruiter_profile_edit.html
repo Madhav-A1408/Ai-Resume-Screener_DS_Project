@@ -2,7 +2,7 @@
 {% block content %}
 <div class="min-h-[60vh] flex items-center justify-center">
   <div class="w-full max-w-2xl px-6">
-    <div class="bg-white/95 p-8 rounded-2xl shadow-xl border border-gray-100">
+    <div class="bg-white/95 p-8 rounded-2xl shadow-xl border border-gray-100 animate-fade-in">
       <h2 class="text-2xl font-semibold mb-3">Edit Profile</h2>
 
       {% if messages %}
@@ -11,9 +11,49 @@
         {% endfor %}
       {% endif %}
 
-      <form method="post" class="space-y-4">
+      <form method="post" enctype="multipart/form-data" class="space-y-4">
+        
+        
         {% csrf_token %}
         {{ form.non_field_errors }}
+
+        <!-- PROFILE IMAGE (MATCH CANDIDATE UI) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Upload Profile Image
+          </label>
+
+          <div class="flex items-center border rounded-lg p-3 bg-gray-50 gap-4">
+
+            <!-- BUTTON -->
+            <button type="button"
+              onclick="document.getElementById('profile_image_input').click()"
+              class="bg-gray-200 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300 transition">
+              Choose File
+            </button>
+
+            <!-- 🔥 PLACE IT HERE -->
+            {{ form.profile_image }}
+
+            <!-- FILE NAME -->
+            <span id="file_name" class="text-sm text-gray-500">
+              {% if form.instance.profile_image %}
+                {{ form.instance.profile_image.name|cut:"profile_images/" }}
+              {% else %}
+                No file chosen
+              {% endif %}
+            </span>
+
+            <!-- PREVIEW -->
+            <span id="profile_image_name" class="ml-auto">
+              {% if form.instance.profile_image %}
+                <img src="{{ form.instance.profile_image.url }}"
+                    class="w-20 h-20 rounded-full object-cover border shadow">
+              {% endif %}
+            </span>
+
+          </div>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
@@ -51,11 +91,39 @@
         </div>
 
         <div class="flex gap-2 mt-4">
-          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Save changes</button>
+          <button 
+            type="submit"
+            class="w-full py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow">
+            Save Profile
+          </button>
           <a href="{% url 'resumes:recruiter_profile' %}" class="px-4 py-2 bg-gray-200 rounded">Cancel</a>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+const input = document.getElementById("profile_image_input");
+const preview = document.getElementById("profile_image_name");
+const fileName = document.getElementById("file_name");
+
+input.addEventListener("change", function () {
+  if (this.files && this.files[0]) {
+
+    // ✅ show file name
+    fileName.textContent = this.files[0].name;
+
+    // ✅ preview image
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      preview.innerHTML = `
+        <img src="${e.target.result}" 
+             class="w-20 h-20 rounded-full object-cover border shadow">
+      `;
+    };
+    reader.readAsDataURL(this.files[0]);
+  }
+});
+</script>
 {% endblock %}

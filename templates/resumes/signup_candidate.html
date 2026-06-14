@@ -11,7 +11,7 @@
       <div class="mb-4 bg-red-100 text-red-700 border border-red-200 p-3 rounded">
         {% for field in form %}
           {% for error in field.errors %}
-            <p>{{ error }}</p>
+             <p>{{ field.label }}: {{ error }}</p>
           {% endfor %}
         {% endfor %}
         {% for error in form.non_field_errors %}
@@ -20,7 +20,7 @@
       </div>
     {% endif %}
 
-    <form method="post" class="space-y-5">
+    <form method="post" class="space-y-5" novalidate>
       {% csrf_token %}
 
       {% for field in form %}
@@ -30,32 +30,79 @@
         </label>
         {{ field }}
 
-        {% if field.errors %}
-          <p class="text-sm text-red-600 mt-1">{{ field.errors|join:', ' }}</p>
-        {% endif %}
+        <!-- {% if field.errors %}
+          <p class="text-sm text-red-600 mt-1 min-h-[20px]">
+            {{ field.errors|join:', ' }}
+          </p>
+        {% endif %} -->
       </div>
       {% endfor %}
 
-      <button 
-        type="submit"
-        class="w-full py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow"
-      >
+      <button type="submit"
+        class="btn-anim w-full py-2.5 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700">
         Sign Up
       </button>
     </form>
 
     <p class="mt-4 text-center text-sm text-gray-600">
       Already have an account? 
-      <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-800 font-medium">Login</a>
+      <a href="{% url 'login' %}" 
+        class="text-blue-600 font-medium link-anim">
+        Login
+      </a>
     </p>
 
   </div>
 </div>
 
 <script>
-  document.querySelectorAll("input").forEach(el => {
-    el.className = "w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-300 focus:outline-none";
+(function(){
+  document.querySelectorAll("input, textarea, select").forEach(el => {
+
+    // Apply same style as login
+    el.classList.add(
+      'w-full',
+      'pt-5',
+      'pb-2',
+      'pl-3',
+      'h-12',
+      'text-base',
+      'pr-3',
+      'border',
+      'border-gray-300',
+      'rounded-md',
+      'bg-white',
+      'text-gray-900',
+      'focus:outline-none',
+      'text-gray-800',
+      'focus:ring-2',
+      'focus:ring-sky-500',
+      'focus:border-sky-500',
+      'transition'
+    );
+
+    const label = el.nextElementSibling;
+
+    // If already filled
+    if(el.value){
+      label.classList.add('text-xs','-top-2','text-sky-600');
+    }
+
+    // Focus animation
+    el.addEventListener('focus', () => {
+      label.classList.add('text-xs','-top-2','text-sky-600');
+    });
+
+    // Blur animation
+    el.addEventListener('blur', () => {
+      if(!el.value){
+        label.classList.remove('text-xs','-top-2','text-sky-600');
+      }
+    });
+
   });
+})();
+
 </script>
 
 {% endblock %}

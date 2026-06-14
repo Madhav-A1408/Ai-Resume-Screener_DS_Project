@@ -9,6 +9,7 @@ from django.contrib import admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),
     path('', lambda request: redirect('resumes:job_list')),
 
     # resumes app
@@ -19,7 +20,7 @@ urlpatterns = [
     # EXPLICIT login/logout routes you want templates to use
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     # Use POST logout (recommended) or next_page redirect
-    path('logout/', auth_views.LogoutView.as_view(next_page='/login/'), name='logout'),
+   path('logout/', views.logout_view, name='logout'),
     path(
     'admin-logout/',
     auth_views.LogoutView.as_view(next_page='/admin/login/'),

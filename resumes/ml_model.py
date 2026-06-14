@@ -25,20 +25,36 @@ def normalize_text(txt):
 
 def score_resume_for_job(resume_text, job):
     """
-    Compute a TF-IDF cosine-similarity score between job (title+description)
-    and resume_text. Returns float 0..1.
+    Hybrid scoring:
+      60% — skill keyword match (how many job skills appear in resume)
+      40% — TF-IDF cosine similarity (general content overlap)
+    Returns float 0..1
     """
-    job_text = normalize_text((job.title or '') + ' ' + (job.description or ''))
-    resume_text = normalize_text(resume_text or '')
-    if not job_text or not resume_text:
-        return 0.0
+    # ── Part 1: Skill match score (60% weight) ────────────────────────────
+    job_skills = [s.strip().lower() for s in (job.skills or '').split(',') if s.strip()]
+    
+    if job_skills:
+        rt = normalize_text(resume_text or '')
+        matched = sum(1 for skill in job_skills if normalize_text(skill) in rt)
+        skill_score = matched / len(job_skills)   # 0..1
+    else:
+        skill_score = 0.0
 
-    vec = TfidfVectorizer().fit([job_text, resume_text])
-    mat = vec.transform([job_text, resume_text])
-    # cosine_similarity returns 2x2 matrix; we want similarity between row0 and row1
-    sim = cosine_similarity(mat[0], mat[1])[0, 0]
-    # sim already between 0..1
-    return float(sim)
+    # ── Part 2: TF-IDF cosine similarity (40% weight) ────────────────────
+    job_text = normalize_text((job.title or '') + ' ' + (job.description or ''))
+    rt = normalize_text(resume_text or '')
+
+    if job_text and rt:
+        vec = TfidfVectorizer().fit([job_text, rt])
+        mat = vec.transform([job_text, rt])
+        tfidf_score = float(cosine_similarity(mat[0], mat[1])[0, 0])
+    else:
+        tfidf_score = 0.0
+
+    # ── Weighted combination ──────────────────────────────────────────────
+    final = (0.6 * skill_score) + (0.4 * tfidf_score)
+    return final
+
 
 def get_matched_skills(resume_text, job):
     """

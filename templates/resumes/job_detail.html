@@ -1,6 +1,98 @@
-{% extends 'base.html' %}{% block content %}
+{% extends 'base.html' %}
+{% block content %}
 
-<div class="bg-white p-4 rounded shadow"><h2 class="text-2xl font-semibold">{{ job.title }}</h2><div class="text-sm text-gray-600">{{ job.company }} — {{ job.location }} — {{ job.created_at }}</div><p class="mt-4">{{ job.description|safe }}</p>
-<div class="mt-4">{% if user.is_authenticated %}{% if applied %}<span class="text-green-600 font-semibold">You have applied to this job.</span>{% else %}<a href="{% url 'resumes:apply_job' job.pk %}" class="px-3 py-2 bg-blue-600 text-white rounded">Apply</a>{% endif %}{% else %}<a href="{% url 'login' %}" class="px-3 py-2 bg-blue-600 text-white rounded">Login to apply</a>{% endif %}
+<div class="max-w-5xl mx-auto mt-6">
+
+  <!-- CARD -->
+  <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+
+    <!-- HEADER -->
+    <h2 class="text-3xl font-bold text-gray-800">{{ job.title }}</h2>
+
+    <div class="text-gray-500 mt-2 text-sm">
+      {{ job.company }} • {{ job.location }} • {{ job.created_at|date:"d M Y, h:i A" }}
+    </div>
+
+    <!-- SKILLS TAGS -->
+    {% if job.skills %}
+    <div class="mt-4 flex flex-wrap gap-2">
+      {% for skill in skills_list %}
+        <span class="bg-blue-100 text-blue-700 px-3 py-1 text-xs rounded-full">
+          {{ skill }}
+        </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <hr class="my-6"> 
+
+    <!-- JOB SUMMARY -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">📄 Job Summary</h3>
+      <div class="text-gray-700 leading-relaxed prose max-w-none">
+        {{ job.description|safe }}
+      </div>
+    </div>
+
+    <!-- RESPONSIBILITIES -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">🛠 Key Responsibilities</h3>
+      <ul class="list-disc pl-5 text-gray-700 space-y-1">
+        <li>Design, develop, and maintain data pipelines</li>
+        <li>Process structured and unstructured data</li>
+        <li>Work with databases and perform analysis</li>
+        <li>Support ETL processes</li>
+        <li>Collaborate with teams</li>
+      </ul>
+    </div>
+
+    <!-- QUALIFICATIONS -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">🎓 Required Qualifications</h3>
+      <ul class="list-disc pl-5 text-gray-700 space-y-1">
+        <li>Bachelor’s degree in CS/IT or related field</li>
+        <li>Knowledge of Python, SQL, Java</li>
+        <li>Understanding of data structures</li>
+        <li>Problem-solving skills</li>
+      </ul>
+    </div>
+
+    <!-- APPLY SECTION -->
+    <div class="mt-8 flex items-center justify-between">
+
+      <!-- STATUS -->
+      {% if expired %}
+        <div class="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-medium">
+          ❌ Applications Closed
+        </div>
+
+      {% elif applied %}
+        <div class="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-medium">
+          ✔ Already Applied
+        </div>
+
+      {% endif %}
+
+      <!-- APPLY BUTTON -->
+      {% if not expired and not applied %}
+        {% if user.is_authenticated %}
+          <a href="{% url 'resumes:apply_job' job.pk %}"
+             class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold
+             shadow-md hover:bg-green-700 hover:scale-105 transition-all duration-300">
+             Apply Now
+          </a>
+        {% else %}
+          <a href="{% url 'login' %}"
+             class="bg-blue-600 text-white px-5 py-2 rounded-lg">
+             Login to Apply
+          </a>
+        {% endif %}
+      {% endif %}
+
+    </div>
+
+  </div>
+
 </div>
-</div>{% endblock %}
+
+{% endblock %}

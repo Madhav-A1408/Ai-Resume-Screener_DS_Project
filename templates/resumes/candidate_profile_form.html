@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-lg bg-white/95 p-8 rounded-2xl shadow-xl border border-gray-100">
+
+    <h2 class="text-2xl font-semibold text-gray-800 mb-1">
+      Complete Your Profile
+    </h2>
+
+    <p class="text-gray-500 mb-6 text-sm">
+      Add your details to improve job matching
+    </p>
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-5">
+
+      {% csrf_token %}
+
+      <!-- Profile Image Upload -->
+      <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+      Upload Profile Image
+      </label>
+
+      <div class="flex items-center border rounded-lg p-2 bg-gray-50">
+
+      <label class="bg-gray-200 px-3 py-1 rounded cursor-pointer text-sm font-medium">
+      Choose File
+      <input type="file" name="profile_image" accept=".jpg,.png,.jpeg" class="hidden" id="profile_image">
+      </label>
+
+      <span id="profile_image_name" class="ml-auto text-xs text-gray-500">
+      {% if form.instance.profile_image %}
+      <img src="{{ form.instance.profile_image.url }}"
+      class="w-20 h-20 rounded-full mt-2">
+      {% endif %}
+      </span>
+
+      </div>
+      </div>
+      <!-- Resume Upload -->
+      <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+      Upload Resume
+      </label>
+
+      <div class="flex items-center border rounded-lg p-2 bg-gray-50">
+
+      <label class="bg-gray-200 px-3 py-1 rounded cursor-pointer text-sm font-medium">
+      Choose File
+      <input type="file" name="resume" accept=".pdf,.doc,.docx" class="hidden" id="resume">
+      </label>
+
+      <span id="resume_name" class="ml-auto text-xs text-gray-500">
+      {% if form.instance.resume %}
+      {{ form.instance.resume.name|cut:"candidate_resumes/" }}
+      {% else %}
+      No file chosen
+      {% endif %}
+      </span>
+
+      </div>
+      </div>
+
+      {% for field in form %}
+
+      {% if field.name != "profile_image" and field.name != "resume" and field.name != "education" and field.name != "skills" and field.name != "experience" %}
+    <!-- NORMAL FIELD -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        {{ field.label }}
+      </label>
+
+      {{ field }}
+
+      {% if field.errors %}
+        <p class="text-sm text-red-600 mt-1">
+          {{ field.errors|join:", " }}
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- ✅ INSERT EDUCATION AFTER LOCATION -->
+    {% if field.name == "location" %}
+
+      <div>
+
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Education
+        </label>
+
+        <button type="button"
+                onclick="addEducation()"
+                class="mb-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm shadow hover:bg-blue-700">
+          + Add Education
+        </button>
+
+        <div id="educationContainer" class="space-y-4"></div>
+
+        <input type="hidden" name="education" id="educationInput">
+
+      </div>
+      <div class="mt-4">
+
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Skills
+        </label>
+
+        <!-- INPUT + BUTTON -->
+        <div class="flex gap-2">
+          <input type="text" id="skillInput"
+                placeholder="Type a skill (e.g. Python)"
+                class="flex-1 border p-2 rounded-lg">
+
+          <button type="button"
+                  onclick="addSkill()"
+                  class="px-4 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            Add
+          </button>
+        </div>
+
+        <!-- TAGS -->
+        <div id="skillsContainer" class="flex flex-wrap gap-2 mt-3"></div>
+
+        <!-- HIDDEN FIELD -->
+        <input type="hidden" name="skills" id="skillsInput">
+
+      </div>
+
+      <div class="mt-4">
+
+  <label class="block text-sm font-medium text-gray-700 mb-2">
+    Experience
+  </label>
+
+  <select id="experienceSelect"
+          class="w-full border p-2.5 rounded-lg text-gray-400 focus:text-gray-800">
+
+    <option value="" disabled selected hidden>Select Experience</option>
+
+    <option value="Fresher">Fresher (0 years)</option>
+    <option value="0-1 years">0 - 1 years</option>
+    <option value="1-3 years">1 - 3 years</option>
+    <option value="3-5 years">3 - 5 years</option>
+    <option value="5-8 years">5 - 8 years</option>
+    <option value="8-12 years">8 - 12 years</option>
+    <option value="12+ years">12+ years (Expert)</option>
+
+  </select>
+
+  <!-- hidden field -->
+  <input type="hidden" name="experience" id="experienceInput">
+
+</div>
+
+    {% endif %}
+
+  {% endif %}
+
+{% endfor %}
+     
+
+      <button 
+        type="submit"
+        class="w-full py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow"
+      >
+        Save Profile
+      </button>
+
+    </form>
+
+  </div>
+</div>
+
+
+<script>
+
+// Apply styling to all inputs except file inputs
+document.querySelectorAll("input:not([type=file]), textarea").forEach(el => {
+  el.className = "w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-300 focus:outline-none";
+});
+
+
+// 🔹 Function to handle file name display
+function handleFileInput(inputId, textId) {
+  const input = document.getElementById(inputId);
+  const text = document.getElementById(textId);
+
+  if (!input || !text) return; // safety check
+
+  input.addEventListener("change", function () {
+    if (this.files && this.files.length > 0) {
+
+      let fileName = this.files[0].name;
+
+      // Truncate long file names
+      if (fileName.length > 25) {
+        fileName = fileName.substring(0, 25) + "...";
+      }
+
+      text.textContent = fileName;
+
+    } else {
+      text.textContent = "No file chosen";
+    }
+  });
+}
+
+
+// 🔹 Apply for both fields
+handleFileInput("profile_image", "profile_image_name");
+handleFileInput("resume", "resume_name");
+
+
+
+
+// ================= EDUCATION SYSTEM =================
+
+const degrees = [
+  "B.Tech", "B.E", "B.Com", "B.Sc", "BCA",
+  "M.Tech", "MBA", "MCA", "M.Sc",
+  "Diploma", "PhD", "Other"
+];
+
+function addEducation(data = {}) {
+
+  const container = document.getElementById("educationContainer");
+
+  const div = document.createElement("div");
+  div.className = "border p-4 rounded-lg bg-gray-50 relative";
+
+  div.innerHTML = `
+    <button type="button"
+      onclick="this.parentElement.remove(); updateEducation()"
+      class="absolute top-2 right-2 text-red-500 text-sm">❌</button>
+
+    <div class="grid grid-cols-2 gap-3">
+
+      <select class="border p-2 rounded text-gray-400">
+        <option value="" disabled hidden>Select Degree</option>
+        ${degrees.map(d => `
+          <option value="${d}" ${data.degree === d ? 'selected' : ''}>
+            ${d}
+          </option>
+        `).join("")}
+      </select>
+
+      <input type="text" placeholder="Specialization"
+             class="border p-2 rounded"
+             value="${data.spec || ''}">
+
+      <input type="text" placeholder="College Name"
+             class="border p-2 rounded col-span-2"
+             value="${data.college || ''}">
+
+      <input type="number" placeholder="Year"
+             class="border p-2 rounded"
+             value="${data.year || ''}">
+
+      <input type="text" placeholder="CGPA"
+             class="border p-2 rounded"
+             value="${data.cgpa || ''}">
+
+    </div>
+  `;
+
+  container.appendChild(div);
+  updateEducation();
+}
+
+
+// SAVE DATA
+function updateEducation() {
+  const blocks = document.querySelectorAll("#educationContainer > div");
+
+  let values = [];
+
+  blocks.forEach(block => {
+    const inputs = block.querySelectorAll("input, select");
+
+    const degree = inputs[0].value;
+    const spec = inputs[1].value;
+    const college = inputs[2].value;
+    const year = inputs[3].value;
+    const cgpa = inputs[4].value;
+
+    values.push(`${degree}|${spec}|${college}|${year}|${cgpa}`);
+  });
+
+  document.getElementById("educationInput").value = values.join(",");
+}
+
+// LISTEN CHANGES
+document.addEventListener("input", updateEducation);
+document.addEventListener("change", updateEducation);
+
+
+// ================= PREFILL =================
+
+window.onload = function () {
+
+  // ================= EDUCATION =================
+  const existing = "{{ form.instance.education|escapejs }}";
+
+  if (existing) {
+    const entries = existing.split(",");
+
+    entries.forEach(e => {
+      const [degree, spec, college, year, cgpa] = e.split("|");
+
+      addEducation({
+        degree: degree?.trim(),
+        spec: spec?.trim(),
+        college: college?.trim(),
+        year: year?.trim(),
+        cgpa: cgpa?.trim()
+      });
+    });
+  }
+
+
+  // ================= SKILLS =================
+  const existingSkills = "{{ form.instance.skills|escapejs }}";
+
+  if (existingSkills) {
+    skillsList = existingSkills.split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    renderSkills();
+  }
+
+
+  // ================= EXPERIENCE =================
+  const existingExp = "{{ form.instance.experience|escapejs }}";
+
+  if (existingExp) {
+    const select = document.getElementById("experienceSelect");
+
+    select.value = existingExp;
+    document.getElementById("experienceInput").value = existingExp;
+
+    select.classList.remove("text-gray-400");
+    select.classList.add("text-gray-800");
+  }
+
+};
+// Change color based on selection
+document.addEventListener("change", function(e) {
+  if (e.target.tagName === "SELECT") {
+    if (e.target.value === "") {
+      e.target.classList.add("text-gray-400");
+      e.target.classList.remove("text-gray-800");
+    } else {
+      e.target.classList.remove("text-gray-400");
+      e.target.classList.add("text-gray-800");
+    }
+  }
+});
+
+
+
+// ================= SKILLS =================
+
+let skillsList = [];
+
+function addSkill() {
+  const input = document.getElementById("skillInput");
+  const value = input.value.trim();
+
+  if (!value) return;
+
+  // avoid duplicates
+  if (skillsList.includes(value.toLowerCase())) {
+    input.value = "";
+    return;
+  }
+
+  skillsList.push(value);
+  input.value = "";
+
+  renderSkills();
+}
+
+function removeSkill(index) {
+  skillsList.splice(index, 1);
+  renderSkills();
+}
+
+function renderSkills() {
+  const container = document.getElementById("skillsContainer");
+  container.innerHTML = "";
+
+  skillsList.forEach((skill, index) => {
+    const tag = document.createElement("div");
+    tag.className = "bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2";
+
+    tag.innerHTML = `
+      ${skill}
+      <span onclick="removeSkill(${index})" class="cursor-pointer text-red-500">✕</span>
+    `;
+
+    container.appendChild(tag);
+  });
+
+  // update hidden input
+  document.getElementById("skillsInput").value = skillsList.join(", ");
+}
+
+
+// ENTER KEY SUPPORT
+document.getElementById("skillInput").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addSkill();
+  }
+});
+
+
+// EXPERIENCE DROPDOWN
+
+document.getElementById("experienceSelect").addEventListener("change", function () {
+  const value = this.value;
+
+  document.getElementById("experienceInput").value = value;
+
+  // placeholder color switch
+  if (value === "") {
+    this.classList.add("text-gray-400");
+    this.classList.remove("text-gray-800");
+  } else {
+    this.classList.remove("text-gray-400");
+    this.classList.add("text-gray-800");
+  }
+});
+
+
+
+</script>
+{% endblock %}

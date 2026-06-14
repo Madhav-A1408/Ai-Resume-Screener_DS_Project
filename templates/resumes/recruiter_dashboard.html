@@ -10,66 +10,86 @@
        + Create New Job
     </a>
 
-    {% for job in jobs %}
-        <div class="border p-4 rounded-lg mb-4 shadow-sm hover:shadow-md transition">
+    <div class="space-y-4 animate-fade-in">
 
-            <!-- Job Title -->
-            <h3 class="text-xl font-semibold text-gray-900">{{ job.title }}</h3>
+{% for job in jobs %}
 
-            <!-- Company + Location -->
-            <div class="text-sm text-gray-600 mt-1">
-                {{ job.company }} — {{ job.location }}
-            </div>
+<div class="bg-white p-5 rounded-xl shadow-md border border-gray-200 
+            hover:shadow-xl hover:scale-[1.01] transition-all duration-300">
 
-            <!-- Deadline Badge -->
-            <div class="mt-2">
-                {% if job.application_deadline %}
-                    <span class="inline-block px-3 py-1 bg-red-50 text-red-700 border border-red-200 rounded-lg 
-                                 text-xs font-medium">
-                        Deadline: {{ job.application_deadline|date:"d-M-Y" }}
-                    </span>
-                {% else %}
-                    <span class="inline-block px-3 py-1 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg 
-                                 text-xs">
-                        No Deadline
-                    </span>
-                {% endif %}
-            </div>
+    <h3 class="text-xl font-semibold text-gray-900">
+        {{ job.title }}
+    </h3>
 
-            <!-- Posted On -->
-            <div class="text-xs text-gray-500 mt-1">
-                Posted on: {{ job.created_at|date:"d M Y" }}
-            </div>
+    <p class="text-sm text-gray-600 mt-1">
+        {{ job.company }} — {{ job.location }}
+    </p>
 
-            <!-- Description Preview -->
-            <p class="mt-3 text-gray-700 text-sm leading-relaxed">
-                {{ job.description|safe|truncatechars_html:250 }}
-            </p>
+    <div class="mt-2">
+        {% if job.application_deadline %}
+            {% if job.application_deadline < today %}
+                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                    Expired
+                </span>
+            {% else %}
+                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                    Deadline: {{ job.application_deadline|date:"d M Y" }}
+                </span>
+            {% endif %}
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                No Deadline
+            </span>
+        {% endif %}
+    </div>
 
-            <!-- View Applicants Button -->
-            <!-- <a href="{% url 'resumes:view_applicants' job.pk %}"
-               class="mt-3 px-3 py-2 bg-blue-600 text-white rounded-lg inline-block hover:bg-blue-700 transition">
-               View Applicants →
-            </a> -->
-            <div class="flex gap-3 mt-3">
+    <p class="text-xs text-gray-500 mt-1">
+        Posted on: {{ job.created_at|date:"d M Y" }}
+    </p>
 
-                <a href="{% url 'resumes:view_applicants' job.id %}"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                View Applicants →
-                </a>
+    <p class="mt-3 text-gray-700 text-sm">
+        {{ job.description|safe|truncatechars_html:200 }}
+    </p>
 
-                <a href="{% url 'resumes:delete_job' job.id %}"
-                onclick="return confirm('Are you sure you want to delete this job?')"
-                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                Delete
-                </a>
+    <div class="flex flex-wrap gap-3 mt-4">
 
-            </div>
+        <a href="{% url 'resumes:view_applicants' job.id %}"
+           class="inline-flex items-center gap-2 px-4 py-2 
+                  bg-blue-600 text-white text-sm font-semibold 
+                  rounded-lg shadow-md 
+                  hover:bg-blue-700 hover:shadow-lg 
+                  transition-all duration-300">
+            👀 View Applicants
+        </a>
 
-        </div>
-    {% empty %}
-        <p class="text-gray-600">You haven't posted any jobs yet.</p>
-    {% endfor %}
+        <a href="{% url 'resumes:edit_job' job.id %}"
+           class="inline-flex items-center gap-2 px-4 py-2 
+                  bg-yellow-500 text-white text-sm font-semibold 
+                  rounded-lg shadow-md 
+                  hover:bg-yellow-600 hover:shadow-lg 
+                  transition-all duration-300">
+            ✏️ Edit Job
+        </a>
+
+        <a href="{% url 'resumes:delete_job' job.id %}"
+           onclick="return confirm('Are you sure you want to delete this job?')"
+           class="inline-flex items-center gap-2 px-4 py-2 
+                  bg-red-600 text-white text-sm font-semibold 
+                  rounded-lg shadow-md 
+                  hover:bg-red-700 hover:shadow-lg 
+                  transition-all duration-300">
+            ❌ Delete
+        </a>
+
+    </div>
+
+</div>
+
+{% empty %}
+<p class="text-gray-600">You haven't posted any jobs yet.</p>
+{% endfor %}
+
+</div>
 
 </div>
 

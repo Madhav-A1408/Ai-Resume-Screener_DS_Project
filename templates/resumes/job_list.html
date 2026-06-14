@@ -6,21 +6,43 @@
   <h2 class="text-2xl font-semibold mb-4 text-gray-800">Jobs</h2>
 
   <!-- Search / Filters -->
-  <form method="get" class="mb-6 flex gap-2 items-center">
-    <input name="q" value="{{ q }}" placeholder="Keyword" class="p-2 border rounded flex-1" />
-    <input name="company" value="{{ company }}" placeholder="Company" class="p-2 border rounded" />
-    <input name="location" value="{{ location }}" placeholder="Location" class="p-2 border rounded" />
-    <button class="px-3 py-2 bg-blue-600 text-white rounded">Search</button>
+  <form method="get" class="mb-6 flex flex-wrap gap-3 items-center">
+    <input name="q" value="{{ q }}" placeholder="Keyword" class="px-4 py-3.5 border border-gray-500 rounded-full 
+       focus:outline-none focus:ring-2 focus:ring-blue-500 
+       focus:border-blue-500 transition-all duration-200 flex-3"  />
+    <input name="company" value="{{ company }}" placeholder="Company" class="px-4 py-3.5 border border-gray-500 rounded-full 
+       focus:outline-none focus:ring-2 focus:ring-blue-500 
+       focus:border-blue-500 transition-all duration-200 flex-3" />
+    <input name="location" value="{{ location }}" placeholder="Location" class="px-4 py-3.5 border border-gray-500 rounded-full 
+       focus:outline-none focus:ring-2 focus:ring-blue-500 
+       focus:border-blue-500 transition-all duration-200 flex-3">
+    <button class="px-6 py-2.5 bg-blue-600 text-white rounded-full 
+       font-medium shadow-md 
+       hover:bg-blue-700 hover:shadow-lg 
+       transition-all duration-300">Search</button>
   </form>
 
   <!-- Job cards -->
   <div class="space-y-4">
     {% for job in jobs %}
-      <div class="border p-4 rounded-lg shadow-sm hover:shadow-md transition">
+      <!-- <div class="border p-4 rounded-lg shadow-sm hover:shadow-md transition"> -->
+      {% if job.application_deadline and job.application_deadline|date:"Y-m-d" < today %}
+  
+        <!-- ❌ EXPIRED JOB (NO ANIMATION) -->
+        <div class="bg-gray-100 opacity-70 p-6 rounded-xl border mb-6 shadow-md">
+
+      {% else %}
+
+        <!-- ✅ ACTIVE JOB (WITH ANIMATION) -->
+        <div class="bg-white p-6 rounded-xl border border-gray-200 mb-6
+                      shadow-md transition-all duration-300
+                      hover:shadow-xl hover:scale-105">
+
+      {% endif %}
         <div class="flex justify-between items-start">
           <div class="flex-1 pr-4">
             <h3 class="text-xl font-semibold text-gray-900">
-              <a href="{% url 'resumes:job_detail' job.pk %}" class="hover:underline">{{ job.title }}</a>
+              <a href="{% url 'resumes:job_detail' job.pk %}" class="hover:text-blue-600 transition-colors duration-200">{{ job.title }}</a>
             </h3>
 
             <div class="text-sm text-gray-600 mt-1">
@@ -28,11 +50,11 @@
             </div>
 
             <!-- metadata: posted, recruiter -->
-            <div class="text-xs text-gray-400 mt-1">
+            <div class="text-xs text-gray-500 mt-1">
               Posted {{ job.created_at|timesince }} ago
-              {% if job.posted_by %}
+              <!-- {% if job.posted_by %}
                 • Posted by {{ job.posted_by.username }}
-              {% endif %}
+              {% endif %} -->
             </div>
 
             <!-- skills (comma list) -->
@@ -79,7 +101,11 @@
                   {% if job.id in applied_job_ids %}
                     <div class="text-sm text-green-600 font-semibold">Already applied</div>
                   {% else %}
-                    <a href="{% url 'resumes:apply_job' job.pk %}" class="px-3 py-2 bg-blue-600 text-white rounded inline-block">Apply</a>
+                    <a href="{% url 'resumes:apply_job' job.pk %}" class="inline-flex items-center justify-center px-5 py-2.5
+                    bg-blue-600 text-white text-sm font-semibold
+                    rounded-lg shadow-md
+                    hover:bg-blue-700 hover:shadow-lg hover:scale-105
+                    transition-all duration-300">Apply</a>
                   {% endif %}
                 {% else %}
                   <a href="{% url 'login' %}" class="px-3 py-2 bg-blue-600 text-white rounded inline-block">Login to Apply</a>
