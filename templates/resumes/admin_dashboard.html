@@ -1,1 +1,55 @@
-{% extends 'base.html' %}{% block content %}<div class="bg-white p-4 rounded shadow"><h2 class="text-xl mb-3">Admin Dashboard</h2><ul><li>Total users: {{ total_users }}</li><li>Total jobs: {{ total_jobs }}</li><li>Total applications: {{ total_apps }}</li></ul></div>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="bg-white p-4 rounded shadow mb-6">
+  <h2 class="text-xl mb-3">Admin Dashboard</h2>
+  <ul>
+    <li>Total users: {{ total_users }}</li>
+    <li>Total jobs: {{ total_jobs }}</li>
+    <li>Total applications: {{ total_apps }}</li>
+  </ul>
+</div>
+
+{% if messages %}
+  {% for m in messages %}
+    <div class="mb-3 p-3 rounded {{ m.tags }} bg-gray-100">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="bg-white p-4 rounded shadow">
+  <h3 class="text-lg font-semibold mb-3">Manage User Emails</h3>
+
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left border-b">
+        <th class="py-2">Username</th>
+        <th class="py-2">Role</th>
+        <th class="py-2">Email</th>
+        <th class="py-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in all_users %}
+      <tr class="border-b">
+        <td class="py-2">{{ u.username }}</td>
+        <td class="py-2">{{ u.profile.role|default:"—" }}</td>
+        <td class="py-2">
+          <form method="post" class="flex gap-2 items-center">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_email">
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            <input type="email" name="new_email" value="{{ u.email }}"
+                   class="border rounded px-2 py-1 w-56">
+            <button type="submit"
+                    class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">
+              Update
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

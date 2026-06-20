@@ -261,23 +261,7 @@ def job_list(request):
         }
     )
 
-# def job_detail(request, pk):
-#     job = get_object_or_404(Job, pk=pk)
-#     applied = False
-#     if request.user.is_authenticated:
-#         applied = Application.objects.filter(user=request.user, job=job).exists()
 
-#     # compute expired based on application_deadline
-#     today = timezone.localdate()
-#     expired = False
-#     if job.application_deadline:
-#         expired = job.application_deadline < today
-
-#     return render(request, 'resumes/job_detail.html', {
-#         'job': job,
-#         'applied': applied,
-#         'expired': expired,
-#     })
 
 def job_detail(request, pk):
     job = get_object_or_404(Job, pk=pk)
@@ -529,14 +513,35 @@ def view_applicants(request, pk):
 
 @login_required
 def admin_dashboard(request):
-    # only admins (profile role admin) - custom dashboard
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'admin':
         return redirect('resumes:job_list')
+
+    if request.method == 'POST' and request.POST.get('action') == 'update_email':
+        user_id = request.POST.get('user_id')
+        new_email = request.POST.get('new_email', '').strip()
+
+        target_user = get_object_or_404(User, pk=user_id)
+
+        if User.objects.filter(email__iexact=new_email).exclude(pk=user_id).exists():
+            messages.error(request, f"Email '{new_email}' is already used by another account.")
+        elif new_email:
+            target_user.email = new_email
+            target_user.save()
+            messages.success(request, f"Updated email for {target_user.username}.")
+
+        return redirect('resumes:admin_dashboard')
+
     total_users = User.objects.count()
     total_jobs = Job.objects.count()
     total_apps = Application.objects.count()
-    return render(request, 'resumes/admin_dashboard.html', {'total_users': total_users, 'total_jobs': total_jobs, 'total_apps': total_apps})
+    all_users = User.objects.select_related('profile').order_by('username')
 
+    return render(request, 'resumes/admin_dashboard.html', {
+        'total_users': total_users,
+        'total_jobs': total_jobs,
+        'total_apps': total_apps,
+        'all_users': all_users,
+    })
 @login_required
 def ml_score_view(request, application_id):
     app = get_object_or_404(Application, pk=application_id, user=request.user)
@@ -680,6 +685,12 @@ def candidate_profile_edit(request):
             profile.experience = request.POST.get('experience', '')
 
             profile.save()
+
+            # 🔥 NEW: update email on the User model
+            new_email = request.POST.get('email', '').strip()
+            if new_email and new_email != request.user.email:
+                request.user.email = new_email
+                request.user.save()
 
             return redirect('resumes:candidate_dashboard')
 
