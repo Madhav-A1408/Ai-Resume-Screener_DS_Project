@@ -111,4 +111,3 @@ Open http://127.0.0.1:8000 in your browser.
 ## Author
 
 **Madhav A**
-[LinkedIn](https://www.linkedin.com/in/madhav-a-/)
