@@ -1,2 +1,21 @@
-# Project exclude paths
+# Virtual environment
 /venv/
+.venv/
+
+# Secrets
+.env
+
+# Database (contains user data)
+db.sqlite3
+
+# Uploaded files (contain personal data)
+/media/
+/resumes/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Python cache
+__pycache__/
+*.pyc
